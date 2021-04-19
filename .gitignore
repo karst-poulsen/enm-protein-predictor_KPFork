@@ -1,0 +1,8 @@
+*.pyc
+.idea/
+env
+venv/
+discrt.py
+Input_Files/
+Output_Files/
+predict.py
