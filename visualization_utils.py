@@ -7,9 +7,7 @@ import data_utils
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import math
-from mpl_toolkits.mplot3d import Axes3D
-from string import ascii_letters
+
 
 class visualize_data(object):
     """Offers an easy way to create visualizations for the input data
@@ -149,7 +147,7 @@ class visualize_data(object):
 
         line = plt.figure()
         plt.plot(plot_data['x']['unbound'], plot_data['x']['unbound'], "o", color='r', alpha=0.5)
-        plt.plot(plot_data['y']['bound'].append(data[y][i]), plot_data['x']['bound'], "o", color='g', alpha=0.5)
+        plt.plot(plot_data['y']['bound'].append(plot_data[y][i]), plot_data['x']['bound'], "o", color='g', alpha=0.5)
         plt.ylim([0, max(self.data[x])])
         plt.xlim([0, max(self.data[y])])
         plt.legend(('Bound', 'Unbound'), fontsize=18)

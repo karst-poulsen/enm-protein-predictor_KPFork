@@ -49,29 +49,29 @@ for key, value in average_metrics.items():
 for key, value in average_importances.items():
     average_importances[key] = value/runs
 #Print
-print "#########Confusion Matrix over all 50 runs#########"
-print "unbound: {}, {}\nbound: {}, {}\n".format(confusion_matrix[0],confusion_matrix[1],confusion_matrix[2],confusion_matrix[3])
+print("#########Confusion Matrix over all 50 runs#########")
+print(f"unbound: {confusion_matrix[0]}, {confusion_matrix[1]} \n bound: {confusion_matrix[2]}, {confusion_matrix[3]} \n")
 
-print "#########VALUES########"
-print "\n~Performance Metrics~"
+print("#########VALUES########")
+print("\n~Performance Metrics~")
 data_utils.clean_print(average_metrics)
-print "\n~Feature Importances~"
+print("\n~Feature Importances~")
 sorted_imports = sorted(average_importances.items(), key=operator.itemgetter(1))
 for tup in reversed(sorted_imports):
-    print "{}: {}".format(tup[0], tup[1])
+    print(f"{tup[0]}: {tup[1]}")
 
 #get std results for metrics
-print "\n########STD VALUES#######"
-print "\n~Performance Metrics~"
+print("\n########STD VALUES#######")
+print("\n~Performance Metrics~")
 for key, arr in std_metrics.items():
     arr = np.std(np.array(arr))
     std_metrics[key] = arr
 for key, arr in std_metrics.items():
-    print "{}: {}".format(key, arr)
+    print(f"{key}: {arr}")
 #GEt std results for importances
-print "\n~Feature Importances~"
+print("\n~Feature Importances~")
 for key, arr in std_importances.items():
     arr = np.std(np.array(arr))
     std_importances[key] = arr
 for key, arr in std_importances.items():
-    print "{}: {}".format(key, arr)
+    print(f"{key}: {arr}")

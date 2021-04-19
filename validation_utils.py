@@ -3,12 +3,15 @@
 This module includes a class with several validation metrics and helper
 functions for those validation metrics.
 """
+from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.utils import column_or_1d
+
 import data_utils
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
+from numpy import array_equal
 import math
 import visualization_utils
+import warnings
 import sklearn
 
 class validation_metrics(object):

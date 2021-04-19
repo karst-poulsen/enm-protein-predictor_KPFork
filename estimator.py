@@ -14,15 +14,25 @@ To make predictions from our database we use a random forest classification algo
 We validate our classifications with several statistical methods including ROC curves.
 """
 import data_utils
-import numpy as np
-import visualization_utils
 import predictor_utils
 import validation_utils
 import sys
 import json
 import numpy as np
 import os
-import math
+
+
+class OutputEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        else:
+            return super(OutputEncoder, self).default(obj)
+
 
 def pipeline(db, test_percentage=0.1, optimize=False, RFECV=False):
     """
@@ -107,16 +117,16 @@ if __name__ == '__main__':
 
     #Run the model multiple times and store results
     for i in range(0, iterations):
-        print "Run Number: {}".format(i)
+        print(f"Run Number: {i}")
         metrics = pipeline(db)
         #hold scores and importance data in json format
-        results["Run_" + str(i)] = {'scores': metrics[SCORES], 'importances': metrics[IMPORTANCES]}
+        results[f"Run_{i}"] = {'scores': metrics[SCORES], 'importances': metrics[IMPORTANCES]}
         #hold classification information in arrays to output to excel file
         data_utils.hold_in_memory(classification_information, metrics[INFORMATION], i, test_size)
 
     #dump the statistic and feature importance results as json
     with open(output_file, 'w') as f:
-        json.dump(results, f)
+        json.dump(results, f, cls=OutputEncoder)
     #Pass prediction information to be inserted into excel document
     data_utils.to_excel(classification_information)
     #Run statistic parser for human readable json

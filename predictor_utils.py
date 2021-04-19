@@ -6,9 +6,8 @@ us with feature engineering and model optimization.
 import os
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import RFECV
-from sklearn.grid_search import GridSearchCV
-import sklearn
-import numpy as np
+from sklearn.model_selection import GridSearchCV
+
 
 class RandomForestClassifierWithCoef(RandomForestClassifier):
     """Adds feature weights for each returned variable from the
@@ -49,7 +48,7 @@ def optimize(model, X_train, Y_train):
     #5 fold validation
     CV_est = GridSearchCV(estimator=model, param_grid=param_grid, cv= 10)
     CV_est.fit(X_train, Y_train)
-    print "Best parameters: \n {}".format(CV_est.best_params_)
+    print(f"Best parameters: \n {CV_est.best_params_}")
 
 def recursive_feature_elimination(model, X_train, Y_train, mask_file):
     """Runs RFECV with 5 folds, stores optimum features
@@ -69,8 +68,8 @@ def recursive_feature_elimination(model, X_train, Y_train, mask_file):
 
     selector = RFECV(estimator=model, step=1, cv=10, scoring='f1', verbose=1)
     selector = selector.fit(X_train, Y_train)
-    print "selector support: \n {} \n selector ranking: \n {}".format(selector.support_, selector.ranking_)
-    print "Optimal number of features: \n {} \n Selector grid scores: \n {} \n".format(selector.n_features_, selector.grid_scores_)
+    print(f"selector support: {selector.support_} \n selector ranking: {selector.ranking_ }")
+    print(f"Optimal number of features: {selector.n_features_} \n Selector grid scores: {selector.grid_scores_}")
     #write optimum binary mask to text file
     with open(mask_file, 'w') as f:
             for item in selector.support_:

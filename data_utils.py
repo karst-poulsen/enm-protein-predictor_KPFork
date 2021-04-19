@@ -6,11 +6,10 @@ and cleaning. It also contains functions that help us work with our data.
 import os
 import pandas as pd
 import numpy as np
-import sklearn
-from sklearn import preprocessing, cross_validation, model_selection
+from sklearn import preprocessing, model_selection
 import random
 import csv
-import sys
+
 
 def apply_RFECV_mask(mask, *args):
     """Applies a binary mask to a dataframe to remove columns. Binary mask is
@@ -36,8 +35,8 @@ def apply_RFECV_mask(mask, *args):
     for dataframe in args:
         assert len(column_mask) == len(list(dataframe)), 'mask length {} does not match dataframe length {}'.format(len(column_mask), len(list(dataframe)))
         for i, col in enumerate(column_mask):
-    	    if col.strip() == 'False':
-    		    column_indexes.append(i)
+            if col.strip() == 'False':
+                column_indexes.append(i)
 
         updated_args.append(dataframe.drop(dataframe.columns[column_indexes], axis=1))
 
@@ -247,7 +246,7 @@ class data_base(object):
     def X_train(self, path):
         if (isinstance(path, str) and os.path.isfile(path)):
             #If trying to set to value from excel
-            self._X_train = fetch_raw_data(path)
+            self._X_train = self.fetch_raw_data(path)
         else:
             #If trying to set to already imported array
             self._X_train = path
@@ -256,7 +255,7 @@ class data_base(object):
     def X_test(self, path):
         if (isinstance(path, str) and os.path.isfile(path)):
             #If trying to set to value from excel
-            self._X_test = fetch_raw_data(path)
+            self._X_test = self.fetch_raw_data(path)
         else:
             #If trying to set to already imported array
             self._X_test = path
@@ -265,7 +264,7 @@ class data_base(object):
     def Y_train(self, path):
         if (isinstance(path, str) and os.path.isfile(path)):
             #If trying to set to value from excel
-            self._Y_train = fetch_raw_data(path)
+            self._Y_train = self.fetch_raw_data(path)
         else:
             #If trying to set to already imported array
             self._Y_train = path
@@ -274,7 +273,7 @@ class data_base(object):
     def Y_test(self, path):
         if (isinstance(path, str) and os.path.isfile(path)):
             #If trying to set to value from excel
-            self._Y_test = fetch_raw_data(path)
+            self._Y_test = self.fetch_raw_data(path)
         else:
             #If trying to set to already imported array
             self._Y_test = path
@@ -290,7 +289,7 @@ class data_base(object):
     def clean_X_data(self, path):
         if (isinstance(path, str) and os.path.isfile(path)):
             #If trying to set to value from excel
-            self.clean_X_data = fetch_raw_data(path)
+            self.clean_X_data = self.fetch_raw_data(path)
         else:
             #If trying to set to already imported array
             self._clean_X_data = path
@@ -299,7 +298,7 @@ class data_base(object):
     def Y_enrichment(self, path):
         if (isinstance(path, str) and os.path.isfile(path)):
             #If trying to set to value from excel
-            self._Y_enrichment = fetch_raw_data(path)
+            self._Y_enrichment = self.fetch_raw_data(path)
         else:
             #If trying to set to already imported array
             self._Y_enrichment = path
@@ -308,7 +307,7 @@ class data_base(object):
     def test_accesion_numbers(self, path):
         if (isinstance(path, str) and os.path.isfile(path)):
             #If trying to set to value from excel
-            self._Y_enrichment = fetch_raw_data(path)
+            self._Y_enrichment = self.fetch_raw_data(path)
         else:
             #If trying to set to already imported array
             self._test_accesion_numbers = path
@@ -352,7 +351,7 @@ def classify(data, cutoff):
         try:
             data = np.array(data)
         except:
-            print "data could not be converted to type: numpy array"
+            print("data could not be converted to type: numpy array")
 
     classified_data = np.empty((len(data)))
 
@@ -426,10 +425,10 @@ def multi_label_encode(dataframe, column):
     categorical_df = pd.DataFrame(index= np.arange(dataframe.shape[0]), columns = set(interprot_identifiers))
     categorical_df = categorical_df.fillna(0)
 
-    for key, val in protein_ips.iteritems():
+    for key, val in protein_ips.items():
         for v in val:
             if v != 0:
-                categorical_df.set_value(key, v, 1)
+                categorical_df.at[key, v] = 1
 
     dataframe = dataframe.drop(column, 1)
     new_dataframe = pd.concat([dataframe, categorical_df], axis=1)
@@ -449,21 +448,21 @@ def clean_print(obj):
     if isinstance(obj, dict):
         for key, val in obj.items():
             if hasattr(val, '__iter__'):
-                print "\n" + key
+                print(f"{key}")
                 clean_print(val)
             else:
-                print '%s : %s' % (key, val)
+                print(f"{key}: {val}")
     elif isinstance(obj, list):
         for val in obj:
             if hasattr(val, '__iter__'):
                 clean_print(val)
             else:
-                print val
+                print(f"{val}")
     else:
         if isinstance(obj, pd.DataFrame):
             clean_print(obj.to_dict(orient='records'))
         else:
-            print str(obj) + "\n"
+            print(f"{str(obj)}")
 
 def to_excel(classification_information):
     """ Prints model output to an excel file
