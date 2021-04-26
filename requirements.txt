@@ -1,4 +1,5 @@
-pandas
-numpy
 matplotlib
+numpy
+pandas
 scikit_learn
+yamldataclassconfig

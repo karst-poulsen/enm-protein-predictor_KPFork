@@ -1,0 +1,20 @@
+BOOTSTRAP: True
+CATEGORICAL_FIELDS:
+  - 'Enzyme Commission Number'
+  - 'Particle Size'
+  - 'Particle Charge'
+  - 'Solvent Cysteine Concentration'
+  - 'Solvent NaCl Concentration'
+DATA_PATH: '/Users/mct19/repos/ENM-Protein-Predictor/Input_Files/database.csv'
+DROP_FIELDS:
+  - 'Protein Length'
+  - 'Sequence'
+  - 'Enrichment'
+  - 'Accesion Number'
+ENRICHMENT_SPLIT_VALUE: 1
+ESTIMATOR_COUNT: 1000
+ITERATIONS: 3
+MASK_PATH: '/Users/mct19/repos/ENM-Protein-Predictor/Input_Files/mask.csv'
+MIN_SAMPLE_SPLIT: 4
+NUM_JOBS: -1
+TRAIN_PERCENTAGE: 0.60
