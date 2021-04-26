@@ -2,7 +2,7 @@ import csv
 import pandas as pd
 import random
 from sklearn import preprocessing, model_selection
-from typing import List
+from typing import List, Tuple
 
 
 class DataUtils:
@@ -52,31 +52,26 @@ class Database(object):
             in the test set
         """
 
-    def __init__(self, raw_data_path: str, enrichment_split_value: float, categorical_fields: List[str], drop_fields: List[str]):
+    def __init__(self, raw_data_path: str):
         self.DATA_PATH = raw_data_path
         self.RAW_DATA = pd.read_csv(self.DATA_PATH)
-        self.ENRICHMENT_SPLIT_VALUE = enrichment_split_value
-        self.CATEGORICAL_FIELDS = categorical_fields
-        self.DROP_FIELDS = drop_fields
 
-    def clean_raw_data(self):
+    def clean_raw_data(self, df: pd.DataFrame, drop_fields: List[str], enrichment_split_value: float) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """ Cleans the raw data, drops useless columns, one hot encodes, and extracts
         class information
 
         Args, Returns: None
         """
-        encoded_train = self.multi_label_encode(self.RAW_DATA, ['Interprot'])
-        one_hot_encoded_train = self.one_hot_encode(encoded_train, self.CATEGORICAL_FIELDS)
 
         #Grab some useful data before dropping from independant variables
-        enrichment = one_hot_encoded_train['Enrichment']
-        accesion_numbers = one_hot_encoded_train['Accesion Number']
+        enrichment = df['Enrichment']
+        accesion_numbers = df['Accesion Number']
         #drop useless columns
-        one_hot_encoded_train_dropped_fields = one_hot_encoded_train.drop(self.DROP_FIELDS, axis=1)
+        one_hot_encoded_train_dropped_fields = df.drop(drop_fields, axis=1)
 
-        train_no_nulls = self.fill_nan(one_hot_encoded_train_dropped_fields, 'Protein Abundance')
+        train_no_nulls = self.fill_nan_mean(one_hot_encoded_train_dropped_fields, 'Protein Abundance')
         cleaned_train = self.normalize_and_reshape(train_no_nulls, accesion_numbers)
-        target = enrichment.apply(lambda x: self.classify(x, self.ENRICHMENT_SPLIT_VALUE))
+        target = enrichment.apply(lambda x: self.classify(x, enrichment_split_value))
 
         return cleaned_train, target
 
@@ -105,7 +100,7 @@ class Database(object):
         return labelled
 
     @staticmethod
-    def fill_nan(df: pd.DataFrame, field_name: str) -> pd.DataFrame:
+    def fill_nan_mean(df: pd.DataFrame, field_name: str) -> pd.DataFrame:
         s = df.sum(axis=0)[field_name]
         c = df[field_name].index.size
         mean = s / c

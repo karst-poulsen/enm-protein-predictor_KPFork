@@ -1,7 +1,6 @@
+import math
 import numpy as np
 from numpy import array_equal
-import math
-
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.utils import column_or_1d
 

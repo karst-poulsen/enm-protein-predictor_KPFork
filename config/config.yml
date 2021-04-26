@@ -16,5 +16,7 @@ ESTIMATOR_COUNT: 1000
 ITERATIONS: 3
 MASK_PATH: '/Users/mct19/repos/ENM-Protein-Predictor/Input_Files/mask.csv'
 MIN_SAMPLE_SPLIT: 4
+MULTI_LABEL_ENCODE_FIELDS:
+  - 'Interprot'
 NUM_JOBS: -1
 TRAIN_PERCENTAGE: 0.60

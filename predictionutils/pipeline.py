@@ -1,6 +1,31 @@
+from dataclasses import dataclass
 import random
+from typing import List
+from yamldataclassconfig.config import YamlDataClassConfig
 
 from . import data_utils, predictor_utils, validation_utils
+
+
+@dataclass
+class Config(YamlDataClassConfig):
+    BOOTSTRAP: bool = False
+    CATEGORICAL_FIELDS: List[str] = None
+    DATA_PATH: str = None
+    DROP_FIELDS: List[str] = None
+    ENRICHMENT_SPLIT_VALUE: int = None
+    ESTIMATOR_COUNT: int = None
+    ITERATIONS: int = None
+    MASK_PATH: str = None
+    MIN_SAMPLE_SPLIT: int = None
+    MULTI_LABEL_ENCODE_FIELDS: List[str] = None
+    NUM_JOBS: int = None
+    TRAIN_PERCENTAGE: float = None
+
+    def list_variables(self):
+        return [self.BOOTSTRAP, self.CATEGORICAL_FIELDS, self.DATA_PATH, self.DROP_FIELDS,
+                self.ENRICHMENT_SPLIT_VALUE, self.ESTIMATOR_COUNT, self.ITERATIONS,
+                self.MASK_PATH, self.MIN_SAMPLE_SPLIT, self.MULTI_LABEL_ENCODE_FIELDS,
+                self.NUM_JOBS, self.TRAIN_PERCENTAGE]
 
 
 class Pipeline:
@@ -18,17 +43,17 @@ class Pipeline:
         :feature_importances (dict): contains a dictionary of feature importances
         :classification_information (dict): information about the predictions
     """
-    def __init__(self, bootstrap: bool, db: data_utils.Database, estimator_count: int, mask_path: str, min_sample_split: int, num_jobs: int, train_percentage: float):
-        self.BOOTSTRAP = bootstrap
-        self.DB = db
-        self.ESTIMATOR_COUNT = estimator_count
-        self.MASK_PATH = mask_path
-        self.MIN_SAMPLE_SPLIT = min_sample_split
-        self.NUM_JOBS = num_jobs
-        self.TRAIN_PERCENTAGE = train_percentage
+    def __init__(self, default_config_path="/Users/mct19/repos/ENM-Protein-Predictor/config/config.yml"):
+        self.CONFIGS = Config()
+        self.DEFAULT_CONFIG_PATH = default_config_path
+        self.CONFIGS.load(self.DEFAULT_CONFIG_PATH)
+        self.BOOTSTRAP, self.CATEGORICAL_FIELDS, self.DATA_PATH, self.DROP_FIELDS, self.ENRICHMENT_SPLIT_VALUE, self.ESTIMATOR_COUNT, self.ITERATIONS, self.MASK_PATH, self.MIN_SAMPLE_SPLIT, self.MULTI_LABEL_ENCODE_FIELDS, self.NUM_JOBS, self.TRAIN_PERCENTAGE = self.CONFIGS.list_variables()
+        self.DB = data_utils.Database(self.DATA_PATH)
 
     def get_train_and_target(self):
-        train, target = self.DB.clean_raw_data()
+        multi_label_encoded_train = self.DB.multi_label_encode(self.DB.RAW_DATA, self.MULTI_LABEL_ENCODE_FIELDS)
+        one_hot_encoded_train = self.DB.one_hot_encode(multi_label_encoded_train, self.CATEGORICAL_FIELDS)
+        train, target = self.DB.clean_raw_data(one_hot_encoded_train, self.DROP_FIELDS, self.ENRICHMENT_SPLIT_VALUE)
         test_accession_numbers, train_features_no_acc, train_target, val_features_no_acc, val_target = self.DB.split_data(
             self.TRAIN_PERCENTAGE, train, target)
         d = data_utils.DataUtils()
