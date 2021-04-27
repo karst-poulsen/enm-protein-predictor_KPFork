@@ -5,7 +5,7 @@ CATEGORICAL_FIELDS:
   - 'Particle Charge'
   - 'Solvent Cysteine Concentration'
   - 'Solvent NaCl Concentration'
-DATA_PATH: '/Users/mct19/repos/ENM-Protein-Predictor/Input_Files/database.csv'
+DATA_PATH: '/Users/mct19/repos/ENM-Protein-Predictor/Input_Files/KarstenChanData.csv'
 DROP_FIELDS:
   - 'Protein Length'
   - 'Sequence'

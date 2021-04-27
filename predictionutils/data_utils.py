@@ -76,12 +76,19 @@ class Database(object):
         return cleaned_train, target
 
     @staticmethod
-    def split_data(train_percent, train, target):
-        train_features, val_features, train_target, val_target = model_selection.train_test_split(train, target, test_size=train_percent, stratify=target, random_state=int((random.random()*100)))
-        test_accession_numbers = train_features['Accesion Number']
-        train_features_no_acc = train_features.drop('Accesion Number', axis=1)
-        val_features_no_acc = val_features.drop('Accesion Number', axis=1)
-        return test_accession_numbers, train_features_no_acc, train_target, val_features_no_acc, val_target
+    def save_accession_numbers(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        accession_numbers = df['Accesion Number']
+        return df.drop('Accesion Number', axis=1), accession_numbers
+
+    @staticmethod
+    def split_data(train_percent: float, train: pd.DataFrame, target: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        train_features, val_features, train_target, val_target = model_selection.train_test_split(
+            train,
+            target,
+            test_size=train_percent,
+            stratify=target,
+            random_state=int((random.random()*100)))
+        return train_features, train_target, val_features,  val_target
 
     @staticmethod
     def classify(val: float, cutoff: float) -> int:

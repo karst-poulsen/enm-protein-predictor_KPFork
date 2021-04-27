@@ -1,0 +1,34 @@
+CLEAN_CATEGORICAL_FIELDS:
+  - 'Enzyme Commission Number'
+  - 'Particle Size'
+  - 'Particle Charge'
+  - 'Solvent Cysteine Concentration'
+  - 'Solvent NaCl Concentration'
+CLEAN_DROP_FIELDS:
+  - 'Protein Length'
+  - 'Sequence'
+  - 'Enrichment'
+  - 'Accesion Number'
+CLEAN_ENRICHMENT_SPLIT_VALUE: 1
+CLEAN_MASK_PATH: '/Users/mct19/repos/ENM-Protein-Predictor/Input_Files/mask.csv'
+CLEAN_MULTI_LABEL_ENCODE_FIELDS:
+  - 'Interprot'
+INIT_DATA_PATH: '/Users/mct19/repos/ENM-Protein-Predictor/Input_Files/database.csv'
+MODEL_BOOTSTRAP: True
+MODEL_ESTIMATOR_COUNT: 1000
+MODEL_MIN_SAMPLE_SPLIT: 4
+MODEL_NUM_JOBS: -1
+OPT_NUM_FOLDS: 5
+OPT_NUM_TREES_GRID:
+  - 1000
+OPT_MAX_FEATURES_GRID:
+  - 'auto'
+  - 'sqrt'
+  - 'log2'
+OPT_MAX_DEPTH_GRID:
+  - 5
+OPT_MIN_SAMPLES_SPLIT_GRID:
+  - 2
+OPT_CRITERION_GRID:
+  - 'gini'
+  - 'entropy'

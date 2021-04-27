@@ -1,7 +1,9 @@
-import os
+import json
+import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import RFECV
 from sklearn.model_selection import GridSearchCV
+from typing import List
 
 
 class RandomForestClassifierWithCoef(RandomForestClassifier):
@@ -16,7 +18,7 @@ class RandomForestClassifierWithCoef(RandomForestClassifier):
         super(RandomForestClassifierWithCoef, self).fit(*args, **kwargs)
         self.coef_ = self.feature_importances_
 
-def optimize(model, train_features, train_target):
+def optimize(model: RandomForestClassifierWithCoef, num_folds: int, num_trees_grid: List[int], max_features_grid: List[str], max_depth_grid: List[int], min_samples_split_grid: List[str], criterion_grid: List[str], train_features: pd.DataFrame, train_target: pd.DataFrame, best_params_path: str) -> None:
     """This function optimizes the machine learning classifier's hyperparameters,
     print the parameters that give the best accuracy based on a
     5 fold cross validation.
@@ -31,21 +33,25 @@ def optimize(model, train_features, train_target):
     """
     # add whatever your heart desires to param grid, keep in mind its an incredibly inefficient algorithm
     param_grid = {
-        'n_estimators': [2500],
-        'max_features': ['auto'],
-        'max_depth': [None],
-        # 'min_samples_split': [5, 10, 15, 20, 50], #results from first run was 5
-        'min_samples_split': [2, 3, 4, 5, 6, 7, 8, 9],
-        # 'min_samples_leaf': [1, 5, 15, 20, 50], # results from first run was 1
-        'min_samples_leaf': [1],  # min_samples_leaf isn't necessary when using min_samples_split anyways
+        'n_estimators': num_trees_grid,
+        'max_features': max_features_grid,
+        'max_depth': max_depth_grid,
+        'min_samples_split': min_samples_split_grid,
+        'criterion': criterion_grid,
         'n_jobs': [-1],
     }
     # 5 fold validation
-    CV_est = GridSearchCV(estimator=model, param_grid=param_grid, cv=10)
+    CV_est = GridSearchCV(estimator=model, param_grid=param_grid, cv=num_folds, verbose=2)
     CV_est.fit(train_features, train_target)
-    print(f"Best parameters: \n {CV_est.best_params_}")
+    best_params = CV_est.best_params_
+    print(f"Best parameters: \n {best_params}")
+    j = json.dumps(best_params)
+    with open(best_params_path, 'w+') as f:
+        f.write(j)
+    return None
 
-def recursive_feature_elimination(model, train_features, train_target, mask_file):
+
+def recursive_feature_elimination(model: RandomForestClassifierWithCoef, step: float, folds: int, min_features: int, scoring: str, train_features: pd.DataFrame, train_target: pd.DataFrame, mask_path: str) -> None:
     """Runs RFECV with 5 folds, stores optimum features
     useful for feature engineering in a text file as a binary mask
 
@@ -57,15 +63,16 @@ def recursive_feature_elimination(model, train_features, train_target, mask_file
     Returns:
         None
     """
-    assert isinstance(mask_file, str), "please pass a string specifying maskfile location"
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    mask_file = os.path.join(dir_path, mask_file)
 
-    selector = RFECV(estimator=model, step=1, cv=10, scoring='f1', verbose=1)
+    selector = RFECV(estimator=model, step=step, cv=folds, scoring=scoring, min_features_to_select=min_features, verbose=1)
+    print(train_features)
     selector = selector.fit(train_features, train_target)
     print(f"selector support: {selector.support_} \n selector ranking: {selector.ranking_}")
     print(f"Optimal number of features: {selector.n_features_} \n Selector grid scores: {selector.grid_scores_}")
     # write optimum binary mask to text file
-    with open(mask_file, 'w') as f:
-        for item in selector.support_:
-            f.write('{}, '.format(item))
+    selector_support_list = selector.support_.tolist()
+    with open(mask_path, 'w') as f:
+        for s in selector_support_list:
+            data = 't,' if s else ','
+            f.write(data)
+    return None
