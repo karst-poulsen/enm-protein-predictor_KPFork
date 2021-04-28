@@ -2,7 +2,7 @@ import csv
 import pandas as pd
 import random
 from sklearn import preprocessing, model_selection
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 
 class DataUtils:
@@ -24,6 +24,81 @@ class DataUtils:
         indices_final = list(map(lambda x: x[0], list(filter(lambda x: x[1], list(zipped)))))
         masked_df = df[df.columns[indices_final]]
         return masked_df
+
+    def classify(self, col: Union[pd.DataFrame, pd.Series], cutoff: float) -> Union[pd.DataFrame, pd.Series]:
+        return col.apply(lambda x: self.classify_value(x, cutoff))
+
+    @staticmethod
+    def classify_value(val: float, cutoff: float) -> int:
+        if val >= cutoff:
+            classification = 1
+        else:
+            classification = 0
+        return classification
+
+    def fill_nan_mean(self, df: pd.DataFrame, field_names: List[str]) -> pd.DataFrame:
+        if len(field_names) == 0:
+            return df
+        else:
+            field_name = field_names[0]
+            s = df.sum(axis=0)[field_name]
+            c = df[field_name].index.size
+            mean = s / c
+            updated_field_name = f"{field_name}_updated"
+            df[updated_field_name] = df[field_name].fillna(mean)
+            df_no_nulls = df.drop(field_name, axis=1)
+            df_correct_field_names = df_no_nulls.rename({updated_field_name: field_name}, axis=1)
+            return self.fill_nan_mean(df_correct_field_names, field_names[1:])
+
+    @staticmethod
+    def normalize_and_reshape(df: pd.DataFrame, labels: pd.Series) -> pd.DataFrame:
+        normalized_df = preprocessing.MinMaxScaler().fit_transform(df)
+        normalized_with_columns = pd.DataFrame(normalized_df, columns=list(df))
+        labelled = pd.concat([labels, normalized_with_columns], axis=1)
+        labelled_reset = labelled.reset_index(drop=True)
+        return labelled_reset
+
+    @staticmethod
+    def save_accession_numbers(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        accession_numbers = df['Accesion Number']
+        return df.drop('Accesion Number', axis=1), accession_numbers
+
+    @staticmethod
+    def split_data(train_percent: float, train: pd.DataFrame, target: pd.DataFrame) -> Tuple[
+        pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        train_features, val_features, train_target, val_target = model_selection.train_test_split(
+            train,
+            target,
+            test_size=train_percent,
+            stratify=target,
+            random_state=int((random.random() * 100)))
+        return train_features, train_target, val_features, val_target
+
+    def one_hot_encode(self, df: pd.DataFrame, field_names: List[str]) -> pd.DataFrame:
+        if len(field_names) == 0:
+            return df
+        else:
+            field_name = field_names[0]
+            dummy = pd.get_dummies(df[field_name], prefix=field_name)
+            df_with_dummies = pd.concat([df, dummy], axis=1)
+            df_dropped_cols = df_with_dummies.drop(field_name, axis=1)
+            return self.one_hot_encode(df_dropped_cols, field_names[1:])
+
+    def multi_label_encode(self, df: pd.DataFrame, field_names: List[str]) -> pd.DataFrame:
+        if len(field_names) == 0:
+            return df
+        else:
+            df_reset = df.reset_index(drop=True)
+            field_name = field_names[0]
+            split_field_name = f"{field_name}_split"
+            df_reset[split_field_name] = df_reset[field_name].apply(lambda x: x.split(';'))
+            multi_dim_list = list(map(lambda x: x.split(';'), df_reset[field_name].values))
+            flattened_list = [x for lst in multi_dim_list for x in lst]
+            val_set = list(filter(lambda x: x != '', set(flattened_list)))
+            for val in val_set:
+                df_reset[val] = df_reset[split_field_name].apply(lambda x: 1 if val in x else 0)
+            cleaned_df = df_reset.drop([field_name, split_field_name, '0'], axis=1)
+            return self.multi_label_encode(cleaned_df, field_names[1:])
 
 
 class Database(object):
@@ -56,95 +131,27 @@ class Database(object):
         self.DATA_PATH = raw_data_path
         self.RAW_DATA = pd.read_csv(self.DATA_PATH)
 
-    def clean_raw_data(self, df: pd.DataFrame, drop_fields: List[str], fill_nan_fields: List[str], enrichment_split_value: float) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    def clean_raw_data(self, df: pd.DataFrame, drop_fields: List[str], fill_nan_fields: List[str], enrichment_split_value: float) -> Tuple[Union[pd.DataFrame, pd.Series], Union[pd.DataFrame, pd.Series]]:
         """ Cleans the raw data, drops useless columns, one hot encodes, and extracts
         class information
 
         Args, Returns: None
         """
 
-        #Grab some useful data before dropping from independant variables
         enrichment = df['Enrichment']
         accesion_numbers = df['Accesion Number']
-        #drop useless columns
         one_hot_encoded_train_dropped_fields = df.drop(drop_fields, axis=1)
 
-        train_no_nulls = self.fill_nan_mean(one_hot_encoded_train_dropped_fields, fill_nan_fields)
-        cleaned_train = self.normalize_and_reshape(train_no_nulls, accesion_numbers)
-        target = enrichment.apply(lambda x: self.classify(x, enrichment_split_value))
+        d = DataUtils()
+        train_no_nulls = d.fill_nan_mean(one_hot_encoded_train_dropped_fields, fill_nan_fields)
+        cleaned_train = d.normalize_and_reshape(train_no_nulls, accesion_numbers)
 
+        target = d.classify(enrichment, enrichment_split_value)
         return cleaned_train, target
 
-    @staticmethod
-    def save_accession_numbers(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        accession_numbers = df['Accesion Number']
-        return df.drop('Accesion Number', axis=1), accession_numbers
 
-    @staticmethod
-    def split_data(train_percent: float, train: pd.DataFrame, target: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        train_features, val_features, train_target, val_target = model_selection.train_test_split(
-            train,
-            target,
-            test_size=train_percent,
-            stratify=target,
-            random_state=int((random.random()*100)))
-        return train_features, train_target, val_features,  val_target
 
-    @staticmethod
-    def classify(val: float, cutoff: float) -> int:
-        if val >= cutoff:
-            classification = 1
-        else:
-            classification = 0
-        return classification
 
-    @staticmethod
-    def normalize_and_reshape(df: pd.DataFrame, labels: pd.Series) -> pd.DataFrame:
-        normalized_df = preprocessing.MinMaxScaler().fit_transform(df)
-        normalized_with_columns = pd.DataFrame(normalized_df, columns=list(df))
-        labelled = pd.concat([labels, normalized_with_columns], axis=1)
-        labelled.reset_index(drop=True, inplace=True)
-        return labelled
-
-    def fill_nan_mean(self, df: pd.DataFrame, field_names: List[str]) -> pd.DataFrame:
-        if len(field_names) == 0:
-            return df
-        else:
-            field_name = field_names[0]
-            s = df.sum(axis=0)[field_name]
-            c = df[field_name].index.size
-            mean = s / c
-            updated_field_name = f"{field_name}_updated"
-            df[updated_field_name] = df[field_name].fillna(mean)
-            df_no_nulls = df.drop(field_name, axis=1)
-            df_correct_field_names = df_no_nulls.rename({updated_field_name: field_name}, axis=1)
-            return self.fill_nan_mean(df_correct_field_names, field_names[1:])
-
-    def one_hot_encode(self, df: pd.DataFrame, field_names: List[str]) -> pd.DataFrame:
-        if len(field_names) == 0:
-            return df
-        else:
-            field_name = field_names[0]
-            dummy = pd.get_dummies(df[field_name], prefix=field_name)
-            df_with_dummies = pd.concat([df, dummy], axis=1)
-            df_dropped_cols = df_with_dummies.drop(field_name, axis=1)
-            return self.one_hot_encode(df_dropped_cols, field_names[1:])
-
-    def multi_label_encode(self, df: pd.DataFrame, field_names: List[str]) -> pd.DataFrame:
-        if len(field_names) == 0:
-            return df
-        else:
-            df_reset = df.reset_index(drop=True)
-            field_name = field_names[0]
-            split_field_name = f"{field_name}_split"
-            df_reset[split_field_name] = df_reset[field_name].apply(lambda x: x.split(';'))
-            multi_dim_list = list(map(lambda x: x.split(';'), df_reset[field_name].values))
-            flattened_list = [x for lst in multi_dim_list for x in lst]
-            val_set = list(filter(lambda x: x != '', set(flattened_list)))
-            for val in val_set:
-                df_reset[val] = df_reset[split_field_name].apply(lambda x: 1 if val in x else 0)
-            cleaned_df = df_reset.drop([field_name, split_field_name, '0'], axis=1)
-            return self.multi_label_encode(cleaned_df, field_names[1:])
 
 
 def clean_print(obj):
@@ -176,6 +183,7 @@ def clean_print(obj):
             clean_print(obj.to_dict(orient='records'))
         else:
             print(f"{str(obj)}")
+
 
 def to_excel(classification_information):
     """ Prints model output to an excel file
@@ -235,6 +243,7 @@ def to_excel(classification_information):
                 solvent = '10 mM NaPi pH 7.4 + 3.0 mM NaCl'
 
             file.write('{}, {}, {}, {}, {}, {}, {}\n'.format(protein, particle, solvent, bound, predicted_bound,round(pred, 2), properly_classified))
+
 
 def hold_in_memory(classification_information, metrics, iterations, test_size):
     """Holds classification data in memory to be exported to excel
