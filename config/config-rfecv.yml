@@ -10,6 +10,8 @@ CLEAN_DROP_FIELDS:
   - 'Enrichment'
   - 'Accesion Number'
 CLEAN_ENRICHMENT_SPLIT_VALUE: 1
+CLEAN_FILL_NAN_FIELDS:
+  - 'Protein Abundance'
 CLEAN_MULTI_LABEL_ENCODE_FIELDS:
   - 'Interprot'
 INIT_DATA_PATH: '/Users/mct19/repos/ENM-Protein-Predictor/Input_Files/database.csv'

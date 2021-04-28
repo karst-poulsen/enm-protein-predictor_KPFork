@@ -56,7 +56,7 @@ class Database(object):
         self.DATA_PATH = raw_data_path
         self.RAW_DATA = pd.read_csv(self.DATA_PATH)
 
-    def clean_raw_data(self, df: pd.DataFrame, drop_fields: List[str], enrichment_split_value: float) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    def clean_raw_data(self, df: pd.DataFrame, drop_fields: List[str], fill_nan_fields: List[str], enrichment_split_value: float) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """ Cleans the raw data, drops useless columns, one hot encodes, and extracts
         class information
 
@@ -69,7 +69,7 @@ class Database(object):
         #drop useless columns
         one_hot_encoded_train_dropped_fields = df.drop(drop_fields, axis=1)
 
-        train_no_nulls = self.fill_nan_mean(one_hot_encoded_train_dropped_fields, 'Protein Abundance')
+        train_no_nulls = self.fill_nan_mean(one_hot_encoded_train_dropped_fields, fill_nan_fields)
         cleaned_train = self.normalize_and_reshape(train_no_nulls, accesion_numbers)
         target = enrichment.apply(lambda x: self.classify(x, enrichment_split_value))
 
@@ -106,16 +106,19 @@ class Database(object):
         labelled.reset_index(drop=True, inplace=True)
         return labelled
 
-    @staticmethod
-    def fill_nan_mean(df: pd.DataFrame, field_name: str) -> pd.DataFrame:
-        s = df.sum(axis=0)[field_name]
-        c = df[field_name].index.size
-        mean = s / c
-        updated_field_name = f"{field_name}_updated"
-        df[updated_field_name] = df[field_name].fillna(mean)
-        df_no_nulls = df.drop(field_name, axis=1)
-        df_correct_field_names = df_no_nulls.rename({updated_field_name: field_name}, axis=1)
-        return df_correct_field_names
+    def fill_nan_mean(self, df: pd.DataFrame, field_names: List[str]) -> pd.DataFrame:
+        if len(field_names) == 0:
+            return df
+        else:
+            field_name = field_names[0]
+            s = df.sum(axis=0)[field_name]
+            c = df[field_name].index.size
+            mean = s / c
+            updated_field_name = f"{field_name}_updated"
+            df[updated_field_name] = df[field_name].fillna(mean)
+            df_no_nulls = df.drop(field_name, axis=1)
+            df_correct_field_names = df_no_nulls.rename({updated_field_name: field_name}, axis=1)
+            return self.fill_nan_mean(df_correct_field_names, field_names[1:])
 
     def one_hot_encode(self, df: pd.DataFrame, field_names: List[str]) -> pd.DataFrame:
         if len(field_names) == 0:

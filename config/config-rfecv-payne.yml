@@ -1,0 +1,16 @@
+CLEAN_DROP_FIELDS:
+  - 'Protein Length'
+  - 'Sequence'
+  - 'Enrichment'
+  - 'Accesion Number'
+  - 'Protein Abundance'
+CLEAN_ENRICHMENT_SPLIT_VALUE: 1
+INIT_DATA_PATH: '/Users/mct19/repos/ENM-Protein-Predictor/Input_Files/KarstenChanData.csv'
+MODEL_BOOTSTRAP: True
+MODEL_ESTIMATOR_COUNT: 1000
+MODEL_MIN_SAMPLE_SPLIT: 4
+MODEL_NUM_JOBS: -1
+RFECV_MIN_FEATURES: 9
+RFECV_NUM_FOLDS: 2
+RFECV_SCORING: 'f1'
+RFECV_STEP: .1

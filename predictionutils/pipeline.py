@@ -9,11 +9,12 @@ from . import data_utils, predictor_utils, validation_utils
 
 @dataclass
 class Config(YamlDataClassConfig):
-    CLEAN_CATEGORICAL_FIELDS: List[str] = None
-    CLEAN_DROP_FIELDS: List[str] = None
+    CLEAN_CATEGORICAL_FIELDS: List[str] = field(default_factory=lambda: [])
+    CLEAN_DROP_FIELDS: List[str] = field(default_factory=lambda: [])
     CLEAN_ENRICHMENT_SPLIT_VALUE: int = None
+    CLEAN_FILL_NAN_FIELDS: List[str] = field(default_factory=lambda: [])
     CLEAN_MASK_PATH: str = ''
-    CLEAN_MULTI_LABEL_ENCODE_FIELDS: List[str] = None
+    CLEAN_MULTI_LABEL_ENCODE_FIELDS: List[str] = field(default_factory=lambda: [])
     INIT_DATA_PATH: str = None
     MODEL_BOOTSTRAP: bool = False
     MODEL_ESTIMATOR_COUNT: int = None
@@ -33,7 +34,7 @@ class Config(YamlDataClassConfig):
 
     def list_variables(self):
         return [self.CLEAN_CATEGORICAL_FIELDS, self.CLEAN_DROP_FIELDS, self.CLEAN_ENRICHMENT_SPLIT_VALUE,
-                self.CLEAN_MASK_PATH, self.CLEAN_MULTI_LABEL_ENCODE_FIELDS,
+                self.CLEAN_FILL_NAN_FIELDS, self.CLEAN_MASK_PATH, self.CLEAN_MULTI_LABEL_ENCODE_FIELDS,
                 self.INIT_DATA_PATH, self.MODEL_BOOTSTRAP, self.MODEL_ESTIMATOR_COUNT,
                 self.MODEL_MIN_SAMPLE_SPLIT, self.MODEL_NUM_JOBS, self.OPT_NUM_FOLDS, self.OPT_NUM_TREES_GRID,
                 self.OPT_MAX_FEATURES_GRID, self.OPT_MAX_DEPTH_GRID, self.OPT_MIN_SAMPLES_SPLIT_GRID,
@@ -60,13 +61,13 @@ class Pipeline:
         self.CONFIGS = Config()
         self.CONFIG_PATH = config_path
         self.CONFIGS.load(self.CONFIG_PATH)
-        self.CLEAN_CATEGORICAL_FIELDS, self.CLEAN_DROP_FIELDS, self.CLEAN_ENRICHMENT_SPLIT_VALUE, self.CLEAN_MASK_PATH, self.CLEAN_MULTI_LABEL_ENCODE_FIELDS, self.INIT_DATA_PATH, self.MODEL_BOOTSTRAP, self.MODEL_ESTIMATOR_COUNT, self.MODEL_MIN_SAMPLE_SPLIT, self.MODEL_NUM_JOBS, self.OPT_NUM_FOLDS, self.OPT_NUM_TREES_GRID, self.OPT_MAX_FEATURES_GRID, self.OPT_MAX_DEPTH_GRID, self.OPT_MIN_SAMPLES_SPLIT_GRID, self.OPT_CRITERION_GRID, self.RFECV_MIN_FEATURES, self.RFECV_NUM_FOLDS, self.RFECV_SCORING, self.RFECV_STEP, self.TRAIN_SPLIT_PERCENTAGE = self.CONFIGS.list_variables()
+        self.CLEAN_CATEGORICAL_FIELDS, self.CLEAN_DROP_FIELDS, self.CLEAN_ENRICHMENT_SPLIT_VALUE, self.CLEAN_FILL_NAN_FIELDS, self.CLEAN_MASK_PATH, self.CLEAN_MULTI_LABEL_ENCODE_FIELDS, self.INIT_DATA_PATH, self.MODEL_BOOTSTRAP, self.MODEL_ESTIMATOR_COUNT, self.MODEL_MIN_SAMPLE_SPLIT, self.MODEL_NUM_JOBS, self.OPT_NUM_FOLDS, self.OPT_NUM_TREES_GRID, self.OPT_MAX_FEATURES_GRID, self.OPT_MAX_DEPTH_GRID, self.OPT_MIN_SAMPLES_SPLIT_GRID, self.OPT_CRITERION_GRID, self.RFECV_MIN_FEATURES, self.RFECV_NUM_FOLDS, self.RFECV_SCORING, self.RFECV_STEP, self.TRAIN_SPLIT_PERCENTAGE = self.CONFIGS.list_variables()
         self.DB = data_utils.Database(self.INIT_DATA_PATH)
 
     def clean_train_and_target(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
         multi_label_encoded_train = self.DB.multi_label_encode(self.DB.RAW_DATA, self.CLEAN_MULTI_LABEL_ENCODE_FIELDS)
         one_hot_encoded_train = self.DB.one_hot_encode(multi_label_encoded_train, self.CLEAN_CATEGORICAL_FIELDS)
-        train, target = self.DB.clean_raw_data(one_hot_encoded_train, self.CLEAN_DROP_FIELDS, self.CLEAN_ENRICHMENT_SPLIT_VALUE)
+        train, target = self.DB.clean_raw_data(one_hot_encoded_train, self.CLEAN_DROP_FIELDS, self.CLEAN_FILL_NAN_FIELDS, self.CLEAN_ENRICHMENT_SPLIT_VALUE)
         return train, target
 
     def mask_features(self, df: pd.DataFrame) -> pd.DataFrame:

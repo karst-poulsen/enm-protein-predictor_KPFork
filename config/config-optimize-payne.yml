@@ -1,0 +1,27 @@
+CLEAN_DROP_FIELDS:
+  - 'Protein Length'
+  - 'Sequence'
+  - 'Enrichment'
+  - 'Accesion Number'
+  - 'Protein Abundance'
+CLEAN_ENRICHMENT_SPLIT_VALUE: 1
+CLEAN_MASK_PATH: '/Users/mct19/repos/ENM-Protein-Predictor/Input_Files/mask-payne-2021_04_28T10:51:1619621506.csv'
+INIT_DATA_PATH: '/Users/mct19/repos/ENM-Protein-Predictor/Input_Files/KarstenChanData.csv'
+MODEL_BOOTSTRAP: True
+MODEL_ESTIMATOR_COUNT: 1000
+MODEL_MIN_SAMPLE_SPLIT: 4
+MODEL_NUM_JOBS: -1
+OPT_NUM_FOLDS: 5
+OPT_NUM_TREES_GRID:
+  - 1000
+OPT_MAX_FEATURES_GRID:
+  - 'auto'
+  - 'sqrt'
+  - 'log2'
+OPT_MAX_DEPTH_GRID:
+  - 5
+OPT_MIN_SAMPLES_SPLIT_GRID:
+  - 2
+OPT_CRITERION_GRID:
+  - 'gini'
+  - 'entropy'
