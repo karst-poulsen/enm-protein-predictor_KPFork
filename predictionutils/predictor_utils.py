@@ -1,3 +1,4 @@
+import csv
 import json
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
@@ -72,7 +73,6 @@ def recursive_feature_elimination(model: RandomForestClassifierWithCoef, step: f
     # write optimum binary mask to text file
     selector_support_list = selector.support_.tolist()
     with open(mask_path, 'w') as f:
-        for s in selector_support_list:
-            data = 't,' if s else ','
-            f.write(data)
+        writer = csv.writer(f)
+        writer.writerow(selector_support_list)
     return None

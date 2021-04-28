@@ -14,7 +14,7 @@ class DataUtils:
     def get_mask(path: str) -> List[bool]:
         with open(path, 'r') as f:
             reader = csv.reader(f)
-            column_mask = list(map(lambda x: bool(x), list(reader)[0]))
+            column_mask = list(map(lambda x: x == "True", list(reader)[0]))
         return column_mask
 
     @staticmethod

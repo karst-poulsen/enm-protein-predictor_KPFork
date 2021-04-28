@@ -17,8 +17,11 @@ class Config(YamlDataClassConfig):
     CLEAN_MULTI_LABEL_ENCODE_FIELDS: List[str] = field(default_factory=lambda: [])
     INIT_DATA_PATH: str = None
     MODEL_BOOTSTRAP: bool = False
-    MODEL_ESTIMATOR_COUNT: int = None
+    MODEL_NUM_TREES: int = None
     MODEL_MIN_SAMPLE_SPLIT: int = None
+    MODEL_MAX_FEATURES: str = None
+    MODEL_MAX_DEPTH: int = None
+    MODEL_CRITERION: str = None
     MODEL_NUM_JOBS: int = None
     OPT_NUM_FOLDS: int = 2
     OPT_NUM_TREES_GRID: List[int] = field(default_factory=lambda: [1])
@@ -36,8 +39,9 @@ class Config(YamlDataClassConfig):
     def list_variables(self):
         return [self.CLEAN_CATEGORICAL_FIELDS, self.CLEAN_DROP_FIELDS, self.CLEAN_ENRICHMENT_SPLIT_VALUE,
                 self.CLEAN_FILL_NAN_FIELDS, self.CLEAN_MASK_PATH, self.CLEAN_MULTI_LABEL_ENCODE_FIELDS,
-                self.INIT_DATA_PATH, self.MODEL_BOOTSTRAP, self.MODEL_ESTIMATOR_COUNT,
-                self.MODEL_MIN_SAMPLE_SPLIT, self.MODEL_NUM_JOBS, self.OPT_NUM_FOLDS, self.OPT_NUM_TREES_GRID,
+                self.INIT_DATA_PATH, self.MODEL_BOOTSTRAP, self.MODEL_NUM_TREES,
+                self.MODEL_MIN_SAMPLE_SPLIT, self.MODEL_MAX_FEATURES, self.MODEL_MAX_DEPTH,
+                self.MODEL_CRITERION, self.MODEL_NUM_JOBS, self.OPT_NUM_FOLDS, self.OPT_NUM_TREES_GRID,
                 self.OPT_MAX_FEATURES_GRID, self.OPT_MAX_DEPTH_GRID, self.OPT_MIN_SAMPLES_SPLIT_GRID,
                 self.OPT_CRITERION_GRID, self.RFECV_MIN_FEATURES, self.RFECV_NUM_FOLDS,
                 self.RFECV_SCORING, self.RFECV_STEP, self.TRAIN_SPLIT_PERCENTAGE, self.VALIDATION_PROBABLITY_THRESHOLD]
@@ -62,7 +66,7 @@ class Pipeline:
         self.CONFIGS = Config()
         self.CONFIG_PATH = config_path
         self.CONFIGS.load(self.CONFIG_PATH)
-        self.CLEAN_CATEGORICAL_FIELDS, self.CLEAN_DROP_FIELDS, self.CLEAN_ENRICHMENT_SPLIT_VALUE, self.CLEAN_FILL_NAN_FIELDS, self.CLEAN_MASK_PATH, self.CLEAN_MULTI_LABEL_ENCODE_FIELDS, self.INIT_DATA_PATH, self.MODEL_BOOTSTRAP, self.MODEL_ESTIMATOR_COUNT, self.MODEL_MIN_SAMPLE_SPLIT, self.MODEL_NUM_JOBS, self.OPT_NUM_FOLDS, self.OPT_NUM_TREES_GRID, self.OPT_MAX_FEATURES_GRID, self.OPT_MAX_DEPTH_GRID, self.OPT_MIN_SAMPLES_SPLIT_GRID, self.OPT_CRITERION_GRID, self.RFECV_MIN_FEATURES, self.RFECV_NUM_FOLDS, self.RFECV_SCORING, self.RFECV_STEP, self.TRAIN_SPLIT_PERCENTAGE, self.VALIDATION_PROBABLITY_THRESHOLD = self.CONFIGS.list_variables()
+        self.CLEAN_CATEGORICAL_FIELDS, self.CLEAN_DROP_FIELDS, self.CLEAN_ENRICHMENT_SPLIT_VALUE, self.CLEAN_FILL_NAN_FIELDS, self.CLEAN_MASK_PATH, self.CLEAN_MULTI_LABEL_ENCODE_FIELDS, self.INIT_DATA_PATH, self.MODEL_BOOTSTRAP, self.MODEL_NUM_TREES, self.MODEL_MIN_SAMPLE_SPLIT, self.MODEL_MAX_FEATURES, self.MODEL_MAX_DEPTH, self.MODEL_CRITERION, self.MODEL_NUM_JOBS, self.OPT_NUM_FOLDS, self.OPT_NUM_TREES_GRID, self.OPT_MAX_FEATURES_GRID, self.OPT_MAX_DEPTH_GRID, self.OPT_MIN_SAMPLES_SPLIT_GRID, self.OPT_CRITERION_GRID, self.RFECV_MIN_FEATURES, self.RFECV_NUM_FOLDS, self.RFECV_SCORING, self.RFECV_STEP, self.TRAIN_SPLIT_PERCENTAGE, self.VALIDATION_PROBABLITY_THRESHOLD = self.CONFIGS.list_variables()
         self.DB = data_utils.Database(self.INIT_DATA_PATH)
 
     def clean_and_encode(self) -> Tuple[Union[pd.DataFrame, pd.Series], Union[pd.DataFrame, pd.Series]]:
@@ -80,7 +84,10 @@ class Pipeline:
 
     def get_estimator(self):
         est = predictor_utils.RandomForestClassifierWithCoef(
-            n_estimators=self.MODEL_ESTIMATOR_COUNT,
+            n_estimators=self.MODEL_NUM_TREES,
+            max_depth=self.MODEL_MAX_DEPTH,
+            max_features=self.MODEL_MAX_FEATURES,
+            criterion=self.MODEL_CRITERION,
             bootstrap=self.MODEL_BOOTSTRAP,
             min_samples_split=self.MODEL_MIN_SAMPLE_SPLIT,
             n_jobs=self.MODEL_NUM_JOBS,

@@ -53,7 +53,7 @@ def pipeline(db, test_percentage=0.1, optimize=False, RFECV=False):
         #We split our own data for training and testing if user isn't predicting their own data
         db.stratified_data_split(test_percentage)
 
-    db.X_train, db.X_test= data_utils.apply_RFECV_mask('Input_Files/_mask.txt', db.X_train, db.X_test)
+    db.X_train, db.X_test= data_utils.apply_RFECV_mask('Input_Files/_mask.csv', db.X_train, db.X_test)
     #overloaded RandomForestClassifier with coef
     est = predictor_utils.RandomForestClassifierWithCoef(
                             n_estimators=1000,
