@@ -19,10 +19,10 @@ class DataUtils:
 
     @staticmethod
     def apply_mask(mask: List[bool], df: pd.DataFrame) -> pd.DataFrame:
-        indices = list(range(len(mask)))
-        zipped = zip(indices, mask)
-        indices_final = list(map(lambda x: x[0], list(filter(lambda x: x[1], list(zipped)))))
-        masked_df = df[df.columns[indices_final]]
+        column_indices = list(range(len(mask)))
+        zipped = zip(column_indices, mask)
+        column_indices_final = list(map(lambda x: x[0], list(filter(lambda x: x[1], list(zipped)))))
+        masked_df = df[df.columns[column_indices_final]]
         return masked_df
 
     def classify(self, col: Union[pd.DataFrame, pd.Series], cutoff: float) -> Union[pd.DataFrame, pd.Series]:
@@ -64,12 +64,11 @@ class DataUtils:
         return df.drop('Accesion Number', axis=1), accession_numbers
 
     @staticmethod
-    def split_data(train_percent: float, train: pd.DataFrame, target: pd.DataFrame) -> Tuple[
-        pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    def split_data(train_percent: float, train: pd.DataFrame, target: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         train_features, val_features, train_target, val_target = model_selection.train_test_split(
             train,
             target,
-            test_size=train_percent,
+            train_size=train_percent,
             stratify=target,
             random_state=int((random.random() * 100)))
         return train_features, train_target, val_features, val_target
@@ -140,11 +139,11 @@ class Database(object):
 
         enrichment = df['Enrichment']
         accesion_numbers = df['Accesion Number']
-        one_hot_encoded_train_dropped_fields = df.drop(drop_fields, axis=1)
+        df_dropped_fields = df.drop(drop_fields, axis=1)
 
         d = DataUtils()
-        train_no_nulls = d.fill_nan_mean(one_hot_encoded_train_dropped_fields, fill_nan_fields)
-        cleaned_train = d.normalize_and_reshape(train_no_nulls, accesion_numbers)
+        df_no_nulls = d.fill_nan_mean(df_dropped_fields, fill_nan_fields)
+        cleaned_train = d.normalize_and_reshape(df_no_nulls, accesion_numbers)
 
         target = d.classify(enrichment, enrichment_split_value)
         return cleaned_train, target

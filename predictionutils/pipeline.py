@@ -120,11 +120,11 @@ class Pipeline:
         train_no_mask = d.save_accession_numbers(train_cleaned)[0]
         train = self.mask_features(train_no_mask)
         est = self.get_estimator()
-        return predictor_utils.optimize(est, self.OPT_NUM_FOLDS, self.OPT_NUM_TREES_GRID, self.OPT_MAX_FEATURES_GRID, self.OPT_MAX_DEPTH_GRID, self.OPT_MIN_SAMPLES_SPLIT_GRID, self.OPT_CRITERION_GRID, train, target_cleaned, best_params_out)
+        return est.optimize(self.OPT_NUM_FOLDS, self.OPT_NUM_TREES_GRID, self.OPT_MAX_FEATURES_GRID, self.OPT_MAX_DEPTH_GRID, self.OPT_MIN_SAMPLES_SPLIT_GRID, self.OPT_CRITERION_GRID, train, target_cleaned, best_params_out)
 
     def rfecv(self, mask_out: str):
         d = data_utils.DataUtils()
         train_cleaned, target_cleaned = self.clean_and_encode()
         train_no_mask = d.save_accession_numbers(train_cleaned)[0]
         est = self.get_estimator()
-        return predictor_utils.recursive_feature_elimination(est, self.RFECV_STEP, self.RFECV_NUM_FOLDS, self.RFECV_MIN_FEATURES, self.RFECV_SCORING, train_no_mask, target_cleaned, mask_out)
+        return est.recursive_feature_elimination(self.RFECV_STEP, self.RFECV_NUM_FOLDS, self.RFECV_MIN_FEATURES, self.RFECV_SCORING, train_no_mask, target_cleaned, mask_out)
