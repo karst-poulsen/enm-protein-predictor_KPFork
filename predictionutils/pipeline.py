@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 import pandas as pd
-import random
 from typing import List, Tuple, Union
 from yamldataclassconfig.config import YamlDataClassConfig
 
@@ -90,8 +89,7 @@ class Pipeline:
             criterion=self.MODEL_CRITERION,
             bootstrap=self.MODEL_BOOTSTRAP,
             min_samples_split=self.MODEL_MIN_SAMPLE_SPLIT,
-            n_jobs=self.MODEL_NUM_JOBS,
-            random_state=random.randint(1, 2 ** 8)
+            n_jobs=self.MODEL_NUM_JOBS
         )
         return est
 

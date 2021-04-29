@@ -1,6 +1,5 @@
 import csv
 import pandas as pd
-import random
 from sklearn import preprocessing, model_selection
 from typing import List, Tuple, Union
 
@@ -69,8 +68,7 @@ class DataUtils:
             train,
             target,
             train_size=train_percent,
-            stratify=target,
-            random_state=int((random.random() * 100)))
+            stratify=target)
         return train_features, train_target, val_features, val_target
 
     def one_hot_encode(self, df: pd.DataFrame, field_names: List[str]) -> pd.DataFrame:
@@ -147,127 +145,3 @@ class Database(object):
 
         target = d.classify(enrichment, enrichment_split_value)
         return cleaned_train, target
-
-
-
-
-
-
-def clean_print(obj):
-    """
-    Prints the JSON in a clean format for all my
-    Biochemistry friends
-
-    Args:
-        :param obj (object): Any object you wish to print in readable format
-
-    Returns:
-        None
-    """
-    if isinstance(obj, dict):
-        for key, val in obj.items():
-            if hasattr(val, '__iter__'):
-                print(f"{key}")
-                clean_print(val)
-            else:
-                print(f"{key}: {val}")
-    elif isinstance(obj, list):
-        for val in obj:
-            if hasattr(val, '__iter__'):
-                clean_print(val)
-            else:
-                print(f"{val}")
-    else:
-        if isinstance(obj, pd.DataFrame):
-            clean_print(obj.to_dict(orient='records'))
-        else:
-            print(f"{str(obj)}")
-
-
-def to_excel(classification_information):
-    """ Prints model output to an excel file
-
-        Args:
-            :classification_information (numpy array): Information about results
-            >classification_information = {
-                'all_predict_proba' : np.empty([TOTAL_TESTED_PROTEINS], dtype=float),
-                'all_true_results' : np.empty([TOTAL_TESTED_PROTEINS], dtype=int),
-                'all_accesion_numbers' : np.empty([TOTAL_TESTED_PROTEINS], dtype=str),
-                'all_particle_information' : np.empty([2, TOTAL_TESTED_PROTEINS], dtype=int),
-                'all_solvent_information' : np.empty([3, TOTAL_TESTED_PROTEINS], dtype=int)
-                }
-        Returns:
-            None
-        """
-    with open('prediction_probability.csv', 'w') as file:
-        file.write('Protein Accesion Number, Particle Type, Solvent Conditions, True Bound Value, Predicted Bound Value, Predicted Probability of Being Bound, Properly Classified\n')
-
-        for pred, true_val, protein, particle_s, particle_c, cys, salt8, salt3, in zip(classification_information['all_predict_proba'],
-                                                                                       classification_information['all_true_results'],
-                                                                                       classification_information['all_accesion_numbers'],
-                                                                                       classification_information['all_particle_information'][0],
-                                                                                       classification_information['all_particle_information'][1],
-                                                                                       classification_information['all_solvent_information'][0],
-                                                                                       classification_information['all_solvent_information'][1],
-                                                                                       classification_information['all_solvent_information'][2]
-                                                                                       ):
-            bound = 'no'
-            predicted_bound = 'no'
-            properly_classified = 'no'
-            particle_charge = 'negative'
-            particle_size = '10nm'
-            solvent = '10 mM NaPi pH 7.4'
-
-            if int(round(pred)) == true_val:
-                properly_classified = 'yes'
-            if true_val == 1:
-                bound = 'yes'
-            if int(round(pred)) == 1:
-                predicted_bound = 'yes'
-            if particle_s == 0:
-                particle_size = '100nm'
-            if particle_c == 1:
-                particle_charge = 'positive'
-            if (particle_size == '10nm' and particle_charge == 'positive'):
-                particle = '(+) 10 nm AgNP'
-            if (particle_size == '10nm' and particle_charge == 'negative'):
-                particle = '(-) 10 nm AgNP'
-            if (particle_size == '100nm' and particle_charge == 'negative'):
-                particle = '(-) 100 nm AgNP'
-            if (cys == 1):
-                solvent = '10 mM NaPi pH 7.4 + 0.1 mM cys'
-            if (salt8 == 1):
-                solvent = '10 mM NaPi pH 7.4 + 0.8 mM NaCl'
-            if (salt3 == 1):
-                solvent = '10 mM NaPi pH 7.4 + 3.0 mM NaCl'
-
-            file.write('{}, {}, {}, {}, {}, {}, {}\n'.format(protein, particle, solvent, bound, predicted_bound,round(pred, 2), properly_classified))
-
-
-def hold_in_memory(classification_information, metrics, iterations, test_size):
-    """Holds classification data in memory to be exported to excel
-
-    Args:
-        :classification_information (dict): container for all the classification_information from all the runs
-        :metrics (tuple): information from the current test set to add to classification_information
-        :iterations (int): The current test iterations
-        :test_size (int): The amount of values in the current test set
-    Returns:
-        None
-    """
-    i = iterations
-    TEST_SIZE = test_size #10% of training data is used for testing ceil(10% of 3012)=302
-    PARTICLE_SIZE = 0
-    PARTICLE_CHARGE = 1
-    SOLVENT_CYS = 0
-    SOLVENT_SALT_08 = 1
-    SOLVENT_SALT_3 = 2
-    #Information is placed into numpy arrays as blocks
-    classification_information['all_predict_proba'][i*TEST_SIZE:(i*TEST_SIZE)+TEST_SIZE] = metrics[0]
-    classification_information['all_true_results'][i*TEST_SIZE:(i*TEST_SIZE)+TEST_SIZE] = metrics[1]
-    classification_information['all_accesion_numbers'][i*TEST_SIZE:(i*TEST_SIZE)+TEST_SIZE] = metrics[2]
-    classification_information['all_particle_information'][PARTICLE_CHARGE][i*TEST_SIZE:(i*TEST_SIZE)+TEST_SIZE] = metrics[3]['Particle Charge_1']
-    classification_information['all_particle_information'][PARTICLE_SIZE][i*TEST_SIZE:(i*TEST_SIZE)+TEST_SIZE] = metrics[3]['Particle Size_10']
-    classification_information['all_solvent_information'][SOLVENT_CYS][i*TEST_SIZE:(i*TEST_SIZE)+TEST_SIZE] = metrics[3]['Solvent Cysteine Concentration_0.1']
-    classification_information['all_solvent_information'][SOLVENT_SALT_08][i*TEST_SIZE:(i*TEST_SIZE)+TEST_SIZE] = metrics[3]['Solvent NaCl Concentration_0.8']
-    classification_information['all_solvent_information'][SOLVENT_SALT_3][i*TEST_SIZE:(i*TEST_SIZE)+TEST_SIZE] = metrics[3]['Solvent NaCl Concentration_3.0']
