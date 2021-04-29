@@ -50,17 +50,16 @@ class DataUtils:
             return self.fill_nan_mean(df_correct_field_names, field_names[1:])
 
     @staticmethod
-    def normalize_and_reshape(df: pd.DataFrame, labels: pd.Series) -> pd.DataFrame:
+    def normalize_and_reshape(df: pd.DataFrame) -> pd.DataFrame:
         normalized_df = preprocessing.MinMaxScaler().fit_transform(df)
         normalized_with_columns = pd.DataFrame(normalized_df, columns=list(df))
-        labelled = pd.concat([labels, normalized_with_columns], axis=1)
-        labelled_reset = labelled.reset_index(drop=True)
-        return labelled_reset
+        normalized_reset = normalized_with_columns.reset_index(drop=True)
+        return normalized_reset
 
     @staticmethod
-    def save_accession_numbers(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        accession_numbers = df['Accesion Number']
-        return df.drop('Accesion Number', axis=1), accession_numbers
+    def save_accession_numbers(df: pd.DataFrame, accession_number_fieldname: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        accession_numbers = df[accession_number_fieldname]
+        return accession_numbers
 
     @staticmethod
     def split_data(train_percent: float, train: pd.DataFrame, target: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -128,20 +127,19 @@ class Database(object):
         self.DATA_PATH = raw_data_path
         self.RAW_DATA = pd.read_csv(self.DATA_PATH)
 
-    def clean_raw_data(self, df: pd.DataFrame, drop_fields: List[str], fill_nan_fields: List[str], enrichment_split_value: float) -> Tuple[Union[pd.DataFrame, pd.Series], Union[pd.DataFrame, pd.Series]]:
+    def clean_raw_data(self, df: pd.DataFrame, drop_fields: List[str], fill_nan_fields: List[str], enrichment_split_value: float, target_fieldname: str) -> Tuple[Union[pd.DataFrame, pd.Series], Union[pd.DataFrame, pd.Series]]:
         """ Cleans the raw data, drops useless columns, one hot encodes, and extracts
         class information
 
         Args, Returns: None
         """
 
-        enrichment = df['Enrichment']
-        accesion_numbers = df['Accesion Number']
+        target = df[target_fieldname]
         df_dropped_fields = df.drop(drop_fields, axis=1)
 
         d = DataUtils()
         df_no_nulls = d.fill_nan_mean(df_dropped_fields, fill_nan_fields)
-        cleaned_train = d.normalize_and_reshape(df_no_nulls, accesion_numbers)
+        cleaned_train = d.normalize_and_reshape(df_no_nulls)
 
-        target = d.classify(enrichment, enrichment_split_value)
-        return cleaned_train, target
+        target_classified = d.classify(target, enrichment_split_value)
+        return cleaned_train, target_classified

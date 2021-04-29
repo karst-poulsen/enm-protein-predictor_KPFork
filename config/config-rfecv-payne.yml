@@ -5,6 +5,7 @@ CLEAN_DROP_FIELDS:
   - 'Accesion Number'
   - 'Protein Abundance'
 CLEAN_ENRICHMENT_SPLIT_VALUE: 1
+CLEAN_TARGET_FIELDNAME: 'Enrichment'
 INIT_DATA_PATH: '/Users/mct19/repos/ENM-Protein-Predictor/Input_Files/KarstenChanData.csv'
 MODEL_BOOTSTRAP: True
 MODEL_NUM_TREES: 1000

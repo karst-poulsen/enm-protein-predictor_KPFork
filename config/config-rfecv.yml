@@ -14,6 +14,7 @@ CLEAN_FILL_NAN_FIELDS:
   - 'Protein Abundance'
 CLEAN_MULTI_LABEL_ENCODE_FIELDS:
   - 'Interprot'
+CLEAN_TARGET_FIELDNAME: 'Enrichment'
 INIT_DATA_PATH: '/Users/mct19/repos/ENM-Protein-Predictor/Input_Files/database.csv'
 MODEL_BOOTSTRAP: True
 MODEL_NUM_TREES: 1000
