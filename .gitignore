@@ -4,6 +4,6 @@
 env
 venv/
 discrt.py
-Input_Files/
-Output_Files/
+data-in/
+data-out/
 predict.py

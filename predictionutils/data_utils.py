@@ -104,7 +104,7 @@ class Database(object):
        Input files and then calling clean_raw_data(). This sets the clean_X_data,
        y_enrichment and target values. From this point you can split the data
        to train/test the model using our data. To predict your own data, make sure your excel sheet
-       matches the format in <Input_Files/database.csv>. Then you can
+       matches the format in <data-in/database.csv>. Then you can
        call db.predict = <your_csv_path>. The X_test and Y_test data will now
        be your data. Just remove the stratified_data_split from the pipeline
        because you will now not need to split any data.
