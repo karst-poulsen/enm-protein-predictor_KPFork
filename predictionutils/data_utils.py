@@ -5,12 +5,23 @@ from typing import List, Tuple, Union
 
 
 class DataUtils:
-
+    """
+    Utility class to hold common cleaning methods.
+    """
     def __init__(self):
         self.init = True
 
     @staticmethod
     def get_mask(path: str) -> List[bool]:
+        """
+        Read binary mask into memory.
+
+        Args:
+            path: str | path to mask file
+
+        Returns: List[bool] | binary mask to apply to columns
+
+        """
         with open(path, 'r') as f:
             reader = csv.reader(f)
             column_mask = list(map(lambda x: x == "True", list(reader)[0]))
@@ -18,6 +29,16 @@ class DataUtils:
 
     @staticmethod
     def apply_mask(mask: List[bool], df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply binary mask to drop columns ranked as less important by recursive feature elimination.
+
+        Args:
+            mask: List[bool] | binary mask -- True if we should keep the column and False otherwise
+            df: pd.DataFrame
+
+        Returns: pd.DataFrame | original dataframe without columns defined by mask
+
+        """
         column_indices = list(range(len(mask)))
         zipped = zip(column_indices, mask)
         column_indices_final = list(map(lambda x: x[0], list(filter(lambda x: x[1], list(zipped)))))
@@ -25,10 +46,30 @@ class DataUtils:
         return masked_df
 
     def classify(self, col: Union[pd.DataFrame, pd.Series], cutoff: float) -> Union[pd.DataFrame, pd.Series]:
+        """
+        Apply value classification function to dataframe.
+
+        Args:
+            col: Union[pd.DataFrame, pd.Series] | Target data
+            cutoff: float | cutoff value for classification
+
+        Returns: Union[pd.DataFrame, pd.Series] | classified data
+
+        """
         return col.apply(lambda x: self.classify_value(x, cutoff))
 
     @staticmethod
     def classify_value(val: float, cutoff: float) -> int:
+        """
+        Function to classify target into binary labels.
+
+        Args:
+            val: float | value to classify
+            cutoff: float | cutoff value for classification
+
+        Returns: 0 if val < cutoff ese 1
+
+        """
         if val >= cutoff:
             classification = 1
         else:
@@ -36,6 +77,15 @@ class DataUtils:
         return classification
 
     def fill_nan_mean(self, df: pd.DataFrame, field_names: List[str]) -> pd.DataFrame:
+        """
+        Fill nan values with the column's mean value.
+        Args:
+            df: pd.DataFrame
+            field_names: List[str] | List of fieldnames to fill
+
+        Returns: pd.Dataframe
+
+        """
         if len(field_names) == 0:
             return df
         else:
@@ -50,27 +100,53 @@ class DataUtils:
             return self.fill_nan_mean(df_correct_field_names, field_names[1:])
 
     @staticmethod
-    def normalize_and_reshape(df: pd.DataFrame) -> pd.DataFrame:
+    def normalize(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Normalize columns.
+
+        Args:
+            df: pd.DataFrame
+
+        Returns: pd.DataFrame | dataframe with continuous columns normalized via scikit learn's MinMaxScaler
+
+        """
         normalized_df = preprocessing.MinMaxScaler().fit_transform(df)
         normalized_with_columns = pd.DataFrame(normalized_df, columns=list(df))
         normalized_reset = normalized_with_columns.reset_index(drop=True)
         return normalized_reset
 
-    @staticmethod
-    def save_accession_numbers(df: pd.DataFrame, accession_number_fieldname: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        accession_numbers = df[accession_number_fieldname]
-        return accession_numbers
 
     @staticmethod
-    def split_data(train_percent: float, train: pd.DataFrame, target: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        train_features, val_features, train_target, val_target = model_selection.train_test_split(
+    def split_data(train_percent: float, train: pd.DataFrame, labels: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """
+        Split data into training and validation sets.
+
+        Args:
+            train_percent: float | what percent of data to use for training
+            train: pd.DataFrame | features dataframe
+            labels: pd.DataFrame | labels dataframe
+
+        Returns: Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame] | training features,
+        training labels, validation features, validation labels
+
+        """
+        train_features, val_features, train_labels, val_labels = model_selection.train_test_split(
             train,
-            target,
+            labels,
             train_size=train_percent,
-            stratify=target)
-        return train_features, train_target, val_features, val_target
+            stratify=labels)
+        return train_features, train_labels, val_features, val_labels
 
     def one_hot_encode(self, df: pd.DataFrame, field_names: List[str]) -> pd.DataFrame:
+        """
+        One-hot encode all fields in `field_names` and attach as columns to original dataframe.
+        Args:
+            df: pd.Dataframe
+            field_names: List[str] | fieldnames of columns to one-hot encode
+
+        Returns: original df with new one-hot encoded columns minus old unencoded columns
+
+        """
         if len(field_names) == 0:
             return df
         else:
@@ -81,6 +157,16 @@ class DataUtils:
             return self.one_hot_encode(df_dropped_cols, field_names[1:])
 
     def multi_label_encode(self, df: pd.DataFrame, field_names: List[str]) -> pd.DataFrame:
+        """
+        Multi-label encode all fields in `field_names` and attach as columns to original dataframe.
+
+        Args:
+            df: pd.Dataframe
+            field_names: List[str] | fieldnames of columns to multi-label encode
+
+        Returns: original df with new multi-label encoded columns minus old unencoded columns
+
+        """
         if len(field_names) == 0:
             return df
         else:
@@ -95,51 +181,3 @@ class DataUtils:
                 df_reset[val] = df_reset[split_field_name].apply(lambda x: 1 if val in x else 0)
             cleaned_df = df_reset.drop([field_name, split_field_name, '0'], axis=1)
             return self.multi_label_encode(cleaned_df, field_names[1:])
-
-
-class Database(object):
-    """Handles all data fetching and preparation. Attributes
-       can be assigned to csv files with the assignment operator. Typical use
-       case is to set raw_data to a csv file matching the format found in
-       Input files and then calling clean_raw_data(). This sets the clean_X_data,
-       y_enrichment and target values. From this point you can split the data
-       to train/test the model using our data. To predict your own data, make sure your excel sheet
-       matches the format in <data-in/database.csv>. Then you can
-       call db.predict = <your_csv_path>. The X_test and Y_test data will now
-       be your data. Just remove the stratified_data_split from the pipeline
-       because you will now not need to split any data.
-
-       Args:
-            None
-       Attributes:
-            :self._raw_data (Pandas Dataframe): Holds raw data in the same form as excel file. initialized after fetch_raw_data() is called
-            :self._clean_X_data (Pandas Dataframe): Holds cleaned and prepared X data.
-            :self._Y_enrichment (numpy array): Holds continous Y values
-            :self._X_train (Pandas Dataframe): Holds the X training data
-            :self._X_test (Pandas Dataframe): Holds the X test data
-            :self._Y_train (Pandas Dataframe): Holds the Y training data
-            :self._Y_test (Pandas Dataframe): Holds the T testing data
-            :self._test_accesion_numbers (list): holds the accesion_numbers
-            in the test set
-        """
-
-    def __init__(self, raw_data_path: str):
-        self.DATA_PATH = raw_data_path
-        self.RAW_DATA = pd.read_csv(self.DATA_PATH)
-
-    def clean_raw_data(self, df: pd.DataFrame, drop_fields: List[str], fill_nan_fields: List[str], enrichment_split_value: float, target_fieldname: str) -> Tuple[Union[pd.DataFrame, pd.Series], Union[pd.DataFrame, pd.Series]]:
-        """ Cleans the raw data, drops useless columns, one hot encodes, and extracts
-        class information
-
-        Args, Returns: None
-        """
-
-        target = df[target_fieldname]
-        df_dropped_fields = df.drop(drop_fields, axis=1)
-
-        d = DataUtils()
-        df_no_nulls = d.fill_nan_mean(df_dropped_fields, fill_nan_fields)
-        cleaned_train = d.normalize_and_reshape(df_no_nulls)
-
-        target_classified = d.classify(target, enrichment_split_value)
-        return cleaned_train, target_classified

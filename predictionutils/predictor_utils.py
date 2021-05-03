@@ -1,5 +1,3 @@
-import csv
-import json
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import RFECV
@@ -8,31 +6,41 @@ from typing import List
 
 
 class RandomForestClassifierWithCoef(RandomForestClassifier):
-    """Adds feature weights for each returned variable from the
-    sklearn RandomForestClassifier:
-    https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/ensemble/forest.py
+    """
+    Wrapper for RandomForestClassifier with added feature weights.
     """
     def fit(self, *args, **kwargs):
-        """Overloaded fit method to include the feature importances
-        of each variable. This is used for RFECV
+        """
+        Overloaded fit method to include the feature importances of each variable.
+
+        Args:
+            *args: see RandomForestClassifier documentation
+            **kwargs: see RandomForestClassifier documentation
+
+        Returns: RandomForestClassifierWithCoef | fitted model
+
         """
         super(RandomForestClassifierWithCoef, self).fit(*args, **kwargs)
         self.coef_ = self.feature_importances_
+        return self
 
-    def optimize(self, num_folds: int, num_trees_grid: List[int], max_features_grid: List[str], max_depth_grid: List[int], min_samples_split_grid: List[str], criterion_grid: List[str], train_features: pd.DataFrame, train_target: pd.DataFrame, best_params_path: str) -> None:
-        """This function optimizes the machine learning classifier's hyperparameters,
-        print the parameters that give the best accuracy based on a
-        5 fold cross validation.
+    def optimize(self, num_folds: int, num_trees_grid: List[int], max_features_grid: List[str], max_depth_grid: List[int], min_samples_split_grid: List[str], criterion_grid: List[str], features: pd.DataFrame, labels: pd.DataFrame) -> GridSearchCV:
+        """
+        Optimize the random forest classifier based on grid defined in hyperparameters.
 
         Args:
-            :param model (obj): The sklearn model you wish to optimize
-            :param X_train (array): The X values of training data
-            :param Y_train (array): The Y values of the training data
+            num_folds: int | Number of folds for cross-validation
+            num_trees_grid: List[int] | grid listing number of trees for optimization
+            max_features_grid: List[int] | grid listing max feature strategies to optimize
+            max_depth_grid: List[int] | grid listing max tree depths for optimization
+            min_samples_split_grid: List[int] | grid listing min sample split size for optimization
+            criterion_grid: List[int] | grid listing functions for measuring quality of split for optimization
+            features: pd.DataFrame | dataframe of features
+            labels: pd.DataFrame | dataframe of labels
 
-        Returns:
-            None
+        Returns: GridSearchCV | fitted model
+
         """
-        # add whatever your heart desires to param grid, keep in mind its an incredibly inefficient algorithm
         param_grid = {
             'n_estimators': num_trees_grid,
             'max_features': max_features_grid,
@@ -41,38 +49,26 @@ class RandomForestClassifierWithCoef(RandomForestClassifier):
             'criterion': criterion_grid,
             'n_jobs': [-1],
         }
-        # 5 fold validation
-        CV_est = GridSearchCV(estimator=self, param_grid=param_grid, cv=num_folds, verbose=2)
-        CV_est.fit(train_features, train_target)
-        best_params = CV_est.best_params_
-        print(f"Best parameters: \n {best_params}")
-        j = json.dumps(best_params)
-        with open(best_params_path, 'w+') as f:
-            f.write(j)
-        return None
+        cv_est = GridSearchCV(estimator=self, param_grid=param_grid, cv=num_folds, verbose=2)
+        cv_est.fit(features, labels)
+        return cv_est
 
-
-    def recursive_feature_elimination(self, step: float, folds: int, min_features: int, scoring: str, train_features: pd.DataFrame, train_target: pd.DataFrame, mask_path: str) -> None:
-        """Runs RFECV with 5 folds, stores optimum features
-        useful for feature engineering in a text file as a binary mask
+    def recursive_feature_elimination(self, step: float, folds: int, min_features: int, scoring: str, train_features: pd.DataFrame, train_target: pd.DataFrame) -> RFECV:
+        """
+        Run recursive feature elimination to optimize features used by model.
 
         Args:
-            :param model (obj): The sklean model you wish to optimize
-            :param X_train (array): The X values of training data
-            :param Y_train (array): The Y values of the training data
-            :param mask_file (string): Path to a textfile to write binary mask
-        Returns:
-            None
+            step: float | number of features (or percent of features of < 1) to remove at each step
+            folds: int | number of folds for cross validation
+            min_features: int | minimum allowed number of features
+            scoring: str | scoring metric to determine feature importance
+            train_features: pd.DataFrame | dataframe of features
+            train_target: pd.DataFrame | dataframe of labels
+
+        Returns: RFECV | fitted model
+
         """
 
         selector = RFECV(estimator=self, step=step, cv=folds, scoring=scoring, min_features_to_select=min_features, verbose=1)
-        print(train_features)
         selector = selector.fit(train_features, train_target)
-        print(f"selector support: {selector.support_} \n selector ranking: {selector.ranking_}")
-        print(f"Optimal number of features: {selector.n_features_} \n Selector grid scores: {selector.grid_scores_}")
-        # write optimum binary mask to text file
-        selector_support_list = selector.support_.tolist()
-        with open(mask_path, 'w') as f:
-            writer = csv.writer(f)
-            writer.writerow(selector_support_list)
-        return None
+        return selector
