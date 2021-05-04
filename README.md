@@ -22,6 +22,9 @@ The project is structured as follows:
 |   +-- rfecv.py
 |   +-- train.py
 ```
+
+The project is set up to expect local directories for writing and reading data. These should be set up directly under the parent directory and added to .gitignore in order to avoid version-controlling data. The current configuration files point to directories called `data-in` and `data-out`; alternative directory names will require adjustments in the config files.
+
 ### config
 The config directory holds configuration files for various run definitions.
 

@@ -115,7 +115,6 @@ class DataUtils:
         normalized_reset = normalized_with_columns.reset_index(drop=True)
         return normalized_reset
 
-
     @staticmethod
     def split_data(train_percent: float, train: pd.DataFrame, labels: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """
