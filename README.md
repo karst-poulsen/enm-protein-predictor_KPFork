@@ -1,5 +1,5 @@
 # ENM-Protein-Predictor 
-This project contains machine learning code for predicting nanoparticle binding. The project includes a package with classes for cleaning and formatting base data; building a random forest classifier on top of the data; and classifier optimization via grid search and recursive feature elimination. Forked from ENM-Protein-Predictor code: https://github.com/mfindlay23/ENM-Protein-Predictor. 
+This project contains machine learning code for predicting nanoparticle binding. The project includes a package with classes for cleaning and formatting base data; building a random forest classifier on top of the data; and classifier optimization via grid search and recursive feature elimination. Forked from [ENM-Protein-Predictor project](https://github.com/mfindlay23/ENM-Protein-Predictor). 
 
 The project is structured as follows:
 ```angular2html
